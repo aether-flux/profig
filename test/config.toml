@@ -1,0 +1,4 @@
+threads = 4
+host = "profig.dev"
+ratio = 5.67
+debug = false
