@@ -2,6 +2,7 @@ pub use profig_macros::Profig;
 
 // mod schema;
 pub mod loader;
+pub mod validator;
 
 // fn main() {
 //     println!("Hello, world!");
