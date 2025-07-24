@@ -1,6 +1,7 @@
 pub use profig_macros::Profig;
 
 // mod schema;
+pub mod types;
 pub mod loader;
 pub mod validator;
 

@@ -1,33 +1,6 @@
-#[warn(unused_imports)]
-#[warn(dead_code)]
-
+use profig_commons::types::{FieldType, FieldSchema, MetaField};
 use quote::{quote, ToTokens};
 use syn::{Data, DeriveInput, Fields, Lit};
-
-#[derive(Debug)]
-pub enum FieldType {
-    Int,
-    Float,
-    Str,
-    Bool,
-}
-
-#[derive(Debug, Default)]
-pub struct MetaField {
-    // pub ty: FieldType,
-    pub default: Option<String>,
-    pub min: Option<f64>,
-    pub max: Option<f64>,
-    pub regex: Option<String>,
-    pub optional: bool,
-}
-
-#[derive(Debug)]
-pub struct FieldSchema {
-    pub name: String,
-    pub ty: FieldType,
-    pub metadata: MetaField,
-}
 
 pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
     let name = input.ident;
@@ -39,14 +12,7 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
         if let Fields::Named(fields_named) = data_struct.fields {
             for field in fields_named.named.iter() {
                 let field_name = field.ident.as_ref().unwrap().to_string();
-                // let mut metadata = vec![];
-
-                // println!("All attrs for {}: {}", field_name, quote! { #(#field.attrs),* });
-                // println!("All attrs for {}: {:#?}", field_name, field.attrs);
-
                 for attr in &field.attrs {
-                    // println!("Attr: {:?}", attr.to_token_stream());
-                    // println!("Attr: {:#?}", attr);
                     if attr.path().is_ident("profig") {
                         let mut meta_field = MetaField::default();
                         let ty_string = quote!(#field.ty).to_string();
@@ -138,18 +104,77 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
     }
 
     // Print metadata (for now)
-    for s in schema {
-        println!("{:#?}", s);
-    }
+    // for s in &schema {
+    //     println!("{:#?}", s);
+    // }
+
+    let schema_entries = schema.iter().map(|f| {
+        let name = &f.name;
+        let ty = match f.ty {
+            FieldType::Str => quote!(::profig::types::FieldType::Str),
+            FieldType::Int => quote!(::profig::types::FieldType::Int),
+            FieldType::Float => quote!(::profig::types::FieldType::Float),
+            FieldType::Bool => quote!(::profig::types::FieldType::Bool),
+        };
+
+        let MetaField {
+            default,
+            min,
+            max,
+            regex,
+            optional,
+        } = &f.metadata;
+
+        let default = match default {
+            Some(v) => quote!(Some(#v.to_string())),
+            None => quote!(None),
+        };
+
+        let regex = match regex {
+            Some(v) => quote!(Some(#v.to_string())),
+            None => quote!(None),
+        };
+
+        let min = match min {
+            Some(m) => quote!(Some(#m)),
+            None => quote!(None),
+        };
+
+        let max = match max {
+            Some(m) => quote!(Some(#m)),
+            None => quote!(None),
+        };
+
+        let optional = quote!(#optional);
+
+        quote! {
+            ::profig::types::FieldSchema {
+                name: #name.to_string(),
+                ty: #ty,
+                metadata: ::profig::types::MetaField {
+                    default: #default,
+                    min: #min,
+                    max: #max,
+                    regex: #regex,
+                    optional: #optional,
+                }
+            }
+        }
+    });
 
     quote! {
         impl #name {
             pub fn load () -> Result<Self, Box<dyn std::error::Error>> {
-                // #(#debug_prints)*
+                let obj = ::profig::loader::load_from_file("config.toml")?;
+                
+                let schema_vec = vec![
+                    #(#schema_entries),*
+                ];
 
-                let obj = ::profig::loader::load_from_file("config.toml");
+                let json_val = ::serde_json::to_value(&obj)?;
+                ::profig::validator::validate_fields(&json_val, &schema_vec)?;
 
-                return obj;
+                return Ok(obj);
             }
         }
     }

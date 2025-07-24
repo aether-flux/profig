@@ -12,10 +12,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "profig-commons"
+version = "0.1.0"
+
+[[package]]
 name = "profig-macros"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
+ "profig-commons",
  "quote",
  "syn",
 ]
