@@ -8,12 +8,10 @@ pub enum FieldType {
 
 #[derive(Debug, Default)]
 pub struct MetaField {
-    // pub ty: FieldType,
     pub default: Option<String>,
     pub min: Option<f64>,
     pub max: Option<f64>,
     pub regex: Option<String>,
-    pub optional: bool,
 }
 
 #[derive(Debug)]

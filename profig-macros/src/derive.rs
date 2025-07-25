@@ -61,8 +61,6 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
                                 }
 
                                 // metadata.push((key, val_str));
-                            } else if key == "optional" {
-                                meta_field.optional = true;
                             } else {
                                 return Err(syn::Error::new_spanned(meta.path, format!("Unknown flag: '{}'", key)));
                             }
@@ -122,7 +120,6 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
             min,
             max,
             regex,
-            optional,
         } = &f.metadata;
 
         let default = match default {
@@ -145,8 +142,6 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
             None => quote!(None),
         };
 
-        let optional = quote!(#optional);
-
         quote! {
             ::profig::types::FieldSchema {
                 name: #name.to_string(),
@@ -156,7 +151,6 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
                     min: #min,
                     max: #max,
                     regex: #regex,
-                    optional: #optional,
                 }
             }
         }

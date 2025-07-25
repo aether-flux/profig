@@ -1,14 +1,16 @@
 use profig::Profig;
 use serde::{Deserialize, Serialize};
-// use profig::types::FieldSchema;
 
 #[derive(Profig, Serialize, Deserialize, Debug)]
 struct Config {
     #[profig(min = 4, max = 10)]
-    threads: u32,
+    threads: f32,
 
     #[profig(default = "localhost")]
     host: String,
+
+    #[profig(regex = r"^[\w\.-]+@[\w\.-]+\.\w+$")]
+    email: String,
 
     #[profig()]
     debug: bool,

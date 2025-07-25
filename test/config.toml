@@ -1,3 +1,5 @@
-threads = 20
+threads = 10
 host = "profig.dev"
 debug = false
+email = "amartya.dev@mail.com"
+# email = "hemlo"
