@@ -52,56 +52,84 @@ fn valid_regex (value: &Value, pattern: &str) -> Result<bool, regex::Error> {
     }
 }
 
-pub fn validate_fields (config: &Value, schema: &[FieldSchema]) -> Result<(), Box<dyn Error>> {
-    // println!("Config in validator: {:?}", config);
-
+pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<(), Box<dyn Error>> {
     // for s in schema {
     //     println!("{:#?}", s);
     // }
 
     for f in schema {
         let meta = &f.metadata;
-        if let Some(v) = config.get(&f.name) {
-            match &f.ty {
-                FieldType::Int => {
-                    if let Some(min) = &meta.min {
-                        // println!("Min = {}, Value = {}", min, v);
-                        if less_than_min(&v, *min) {
-                            return Err(Box::new(MyErr(format!("Value '{}' less than min. Field: '{}'", v, &f.name))));
+        match config.get(&f.name) {
+            Some(v) if !v.is_null() => {
+                match &f.ty {
+                    FieldType::Int => {
+                        if let Some(min) = &meta.min {
+                            // println!("Min = {}, Value = {}", min, v);
+                            if less_than_min(&v, *min) {
+                                return Err(Box::new(MyErr(format!("Value '{}' less than min. Field: '{}'", v, &f.name))));
+                            }
                         }
-                    }
 
-                    if let Some(max) = &meta.max {
-                        // println!("Max = {}, Value = {}", max, v);
-                        if greater_than_max(&v, *max) {
-                            return Err(Box::new(MyErr(format!("Value '{}' greater than max. Field: '{}'", v, &f.name))));
+                        if let Some(max) = &meta.max {
+                            // println!("Max = {}, Value = {}", max, v);
+                            if greater_than_max(&v, *max) {
+                                return Err(Box::new(MyErr(format!("Value '{}' greater than max. Field: '{}'", v, &f.name))));
+                            }
                         }
-                    }
-                },
-                FieldType::Float => {
-                    if let Some(min) = &meta.min {
-                        // println!("Min = {}, Value = {}", min, v);
-                        if less_than_min(&v, *min) {
-                            return Err(Box::new(MyErr(format!("Value '{}' less than min. Field: '{}'", v, &f.name))));
+                    },
+                    FieldType::Float => {
+                        if let Some(min) = &meta.min {
+                            // println!("Min = {}, Value = {}", min, v);
+                            if less_than_min(&v, *min) {
+                                return Err(Box::new(MyErr(format!("Value '{}' less than min. Field: '{}'", v, &f.name))));
+                            }
                         }
-                    }
 
-                    if let Some(max) = &meta.max {
-                        // println!("Max = {}, Value = {}", max, v);
-                        if greater_than_max(&v, *max) {
-                            return Err(Box::new(MyErr(format!("Value '{}' greater than max. Field: '{}'", v, &f.name))));
+                        if let Some(max) = &meta.max {
+                            // println!("Max = {}, Value = {}", max, v);
+                            if greater_than_max(&v, *max) {
+                                return Err(Box::new(MyErr(format!("Value '{}' greater than max. Field: '{}'", v, &f.name))));
+                            }
+                        }
+                    },
+                    FieldType::Str => {
+                        if let Some(rx) = &meta.regex {
+                            if !valid_regex(&v, &rx)? {
+                                return Err(Box::new(MyErr(format!("Value '{}' does not match provided regex. Field: '{}'", v, &f.name))));
+                            }
                         }
                     }
-                },
-                FieldType::Str => {
-                    if let Some(rx) = &meta.regex {
-                        if !valid_regex(&v, &rx)? {
-                            return Err(Box::new(MyErr(format!("Value '{}' does not match provided regex. Field: '{}'", v, &f.name))));
-                        }
+                    _ => {},
+                }
+            },
+
+            Some(val) if val.is_null() => {
+                if let Some(def) = &meta.default {
+                    match &f.ty {
+                        FieldType::Str => {
+                            if let Some(map) = config.as_object_mut() {
+                                map.insert(f.name.clone(), Value::String(def.clone()));
+                            }
+                        },
+                        _ => {},
                     }
                 }
-                _ => {},
-            }
+            },
+
+            None => {
+                if let Some(def) = &meta.default {
+                    match &f.ty {
+                        FieldType::Str => {
+                            if let Some(map) = config.as_object_mut() {
+                                map.insert(f.name.clone(), Value::String(def.clone()));
+                            }
+                        },
+                        _ => {},
+                    }
+                }
+            },
+
+            _ => {},
         }
     }
 

@@ -7,7 +7,7 @@ struct Config {
     threads: f32,
 
     #[profig(default = "localhost")]
-    host: String,
+    host: Option<String>,
 
     #[profig(regex = r"^[\w\.-]+@[\w\.-]+\.\w+$")]
     email: String,
@@ -19,7 +19,8 @@ struct Config {
 fn main () -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::load()?;
 
-    println!("Config: {:#?}", config);
+    println!("Config: {:#?}", &config);
+    println!("Config host: {:?}", &config.host);
 
     Ok(())
 }

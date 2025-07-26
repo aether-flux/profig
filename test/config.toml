@@ -1,5 +1,5 @@
 threads = 10
-host = "profig.dev"
+# host = "profig.dev"
 debug = false
 email = "amartya.dev@mail.com"
 # email = "hemlo"

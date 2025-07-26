@@ -19,15 +19,38 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
 
                         let field_type = match &field.ty {
                             syn::Type::Path(type_path) => {
+                                let last_segment = type_path.path.segments.last().unwrap();
                                 let ident = type_path.path.segments.last().unwrap().ident.to_string();
 
-                                match ident.as_str() {
-                                    "String" => FieldType::Str,
-                                    "bool" => FieldType::Bool,
-                                    "i8" | "i16" | "i32" | "i64" | "isize" |
-                                    "u8" | "u16" | "u32" | "u64" | "usize" => FieldType::Int,
-                                    "f32" | "f64" => FieldType::Float,
-                                    _ => panic!("Unsupported type: {}", ident),
+                                if ident == "Option" {
+                                    // Option<T> Handling
+                                    if let syn::PathArguments::AngleBracketed(inner_args) = &last_segment.arguments {
+                                        if let Some(syn::GenericArgument::Type(syn::Type::Path(inner_ty_path))) = inner_args.args.first() {
+                                            let inner_ident = inner_ty_path.path.segments.last().unwrap().ident.to_string();
+
+                                            match inner_ident.as_str() {
+                                                "String" => FieldType::Str,
+                                                "bool" => FieldType::Bool,
+                                                "i8" | "i16" | "i32" | "i64" | "isize" |
+                                                "u8" | "u16" | "u32" | "u64" | "usize" => FieldType::Int,
+                                                "f32" | "f64" => FieldType::Float,
+                                                _ => panic!("Unsupported type inside Option<>: {}", inner_ident),
+                                            }
+                                        } else {
+                                            panic!("Option<> must have a concrete type argument");
+                                        }
+                                    } else {
+                                        panic!("Unsupported Option<> type structure");
+                                    }
+                                } else {
+                                    match ident.as_str() {
+                                        "String" => FieldType::Str,
+                                        "bool" => FieldType::Bool,
+                                        "i8" | "i16" | "i32" | "i64" | "isize" |
+                                        "u8" | "u16" | "u32" | "u64" | "usize" => FieldType::Int,
+                                        "f32" | "f64" => FieldType::Float,
+                                        _ => panic!("Unsupported type: {}", ident),
+                                    }
                                 }
                             },
                             _ => panic!("Unsupported type structure for field: {}", &field_name),
@@ -159,16 +182,18 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
     quote! {
         impl #name {
             pub fn load () -> Result<Self, Box<dyn std::error::Error>> {
-                let obj = ::profig::loader::load_from_file("config.toml")?;
+                let obj = ::profig::loader::load_as_value("config.toml")?;
                 
                 let schema_vec = vec![
                     #(#schema_entries),*
                 ];
 
-                let json_val = ::serde_json::to_value(&obj)?;
-                ::profig::validator::validate_fields(&json_val, &schema_vec)?;
+                let mut json_val = ::serde_json::to_value(&obj)?;
+                ::profig::validator::validate_fields(&mut json_val, &schema_vec)?;
 
-                return Ok(obj);
+                let conf = ::serde_json::from_value(json_val)?;
+
+                return Ok(conf);
             }
         }
     }
