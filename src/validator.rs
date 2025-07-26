@@ -111,6 +111,33 @@ pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<()
                                 map.insert(f.name.clone(), Value::String(def.clone()));
                             }
                         },
+                        FieldType::Int => {
+                            if let Ok(parsed) = def.parse() {
+                                if let Some(map) = config.as_object_mut() {
+                                    map.insert(f.name.clone(), Value::Number(parsed));
+                                }
+                            } else {
+                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as integer for field '{}'", def, &f.name))));
+                            }
+                        },
+                        FieldType::Float => {
+                            if let Ok(parsed) = def.parse() {
+                                if let Some(map) = config.as_object_mut() {
+                                    map.insert(f.name.clone(), Value::Number(parsed));
+                                }
+                            } else {
+                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as float for field '{}'", def, &f.name))));
+                            }
+                        },
+                        FieldType::Bool => {
+                            if let Ok(parsed) = def.parse::<bool>() {
+                                if let Some(map) = config.as_object_mut() {
+                                    map.insert(f.name.clone(), Value::Bool(parsed));
+                                }
+                            } else {
+                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as bool for field '{}'", def, &f.name))));
+                            }
+                        },
                         _ => {},
                     }
                 }
@@ -122,6 +149,33 @@ pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<()
                         FieldType::Str => {
                             if let Some(map) = config.as_object_mut() {
                                 map.insert(f.name.clone(), Value::String(def.clone()));
+                            }
+                        },
+                        FieldType::Int => {
+                            if let Ok(parsed) = def.parse() {
+                                if let Some(map) = config.as_object_mut() {
+                                    map.insert(f.name.clone(), Value::Number(parsed));
+                                }
+                            } else {
+                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as integer for field '{}'", def, &f.name))));
+                            }
+                        },
+                        FieldType::Float => {
+                            if let Ok(parsed) = def.parse() {
+                                if let Some(map) = config.as_object_mut() {
+                                    map.insert(f.name.clone(), Value::Number(parsed));
+                                }
+                            } else {
+                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as float for field '{}'", def, &f.name))));
+                            }
+                        },
+                        FieldType::Bool => {
+                            if let Ok(parsed) = def.parse::<bool>() {
+                                if let Some(map) = config.as_object_mut() {
+                                    map.insert(f.name.clone(), Value::Bool(parsed));
+                                }
+                            } else {
+                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as bool for field '{}'", def, &f.name))));
                             }
                         },
                         _ => {},
