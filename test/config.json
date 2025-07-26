@@ -1,0 +1,6 @@
+{
+  "threads": 10,
+  "port": 8080,
+  "email": "aether@os.com",
+  "debug": false
+}

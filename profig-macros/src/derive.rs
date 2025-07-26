@@ -1,14 +1,47 @@
 use profig_commons::types::{FieldType, FieldSchema, MetaField};
 use quote::{quote, ToTokens};
-use syn::{Data, DeriveInput, Fields, Lit};
+use syn::{Data, DeriveInput, Fields, Lit, Meta, MetaList};
 
 pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
-    let name = input.ident;
+    let name = input.ident.clone();
 
+    let mut formats = vec![];
     let mut schema = vec![];
 
+    for attr in &input.attrs {
+        if attr.path().is_ident("profig") {
+            let result = attr.parse_nested_meta(|meta| {
+                let key = meta.path.get_ident().map(|i| i.to_string()).unwrap_or_default();
+
+                if key == "format" {
+                    let value: Lit = meta.value()?.parse()?;
+                    if let Lit::Str(litstr) = value {
+                        formats = litstr.value()
+                            .split(',')
+                            .map(|s| s.trim().to_string())
+                            .collect();
+                    } else {
+                        return Err(syn::Error::new_spanned(value, "Expected string literal for format"));
+                    }
+                } else {
+                    return Err(syn::Error::new_spanned(meta.path, format!("Unknown key: '{}'", key)));
+                }
+
+                Ok(())
+            });
+
+            if let Err(e) = result {
+                return e.to_compile_error().into();
+            }
+        }
+    }
+
+    for f in &formats {
+        println!("Formats: {:#?}", f);
+    }
+
     // Make sure it's a struct
-    if let Data::Struct(data_struct) = input.data {
+    if let Data::Struct(data_struct) = input.data.clone() {
         if let Fields::Named(fields_named) = data_struct.fields {
             for field in fields_named.named.iter() {
                 let field_name = field.ident.as_ref().unwrap().to_string();
@@ -179,10 +212,44 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
         }
     });
 
+    let format_branches = formats.iter().map(|fmt| {
+        let ext_check = match fmt.as_str() {
+            "toml" => quote! { ext == "toml" },
+            "json" => quote! { ext == "json" },
+            "yaml" => quote! { ext == "yaml" },
+            _ => {
+                return syn::Error::new_spanned(&input, format!("Unsupported format: '{}'", fmt)).to_compile_error();
+            }
+        };
+
+        let loader_fn = match fmt.as_str() {
+            "toml" => quote! { ::profig::loader::toml::load_as_value },
+            "json" => quote! { ::profig::loader::json::load_as_value },
+            "yaml" | "yml" => quote! { ::profig::loader::yaml::load_as_value },
+            _ => quote! {},
+        };
+
+        quote! {
+            if #ext_check {
+                obj = #loader_fn(path)?;
+            }
+        }
+    });
+
     quote! {
         impl #name {
-            pub fn load () -> Result<Self, Box<dyn std::error::Error>> {
-                let obj = ::profig::loader::load_as_value("config.toml")?;
+            pub fn load (path: &str) -> Result<Self, Box<dyn std::error::Error>> {
+                let ext = ::std::path::Path::new(path).extension().and_then(|s| s.to_str()).unwrap_or("").to_ascii_lowercase();
+
+                let mut obj = ::serde_json::Value::Null;
+
+                #(#format_branches)*
+
+                if obj.is_null() {
+                    return Err(format!("Unsupported or missing file extension: '{}'", ext).into());
+                }
+
+                // obj = ::profig::loader::load_as_value(path)?;
                 
                 let schema_vec = vec![
                     #(#schema_entries),*

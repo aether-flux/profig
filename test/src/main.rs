@@ -2,9 +2,10 @@ use profig::Profig;
 use serde::{Deserialize, Serialize};
 
 #[derive(Profig, Serialize, Deserialize, Debug)]
+#[profig(format="toml, json")]
 struct Config {
     #[profig(min = 4, max = 10)]
-    threads: f32,
+    threads: i32,
 
     #[profig(default = "localhost")]
     host: Option<String>,
@@ -23,10 +24,13 @@ struct Config {
 }
 
 fn main () -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::load()?;
+    let json_conf = Config::load("config.json")?;
+    let toml_conf = Config::load("config.toml")?;
+    let yaml_conf = Config::load("config.yaml")?;
 
-    println!("Config: {:#?}", &config);
-    println!("Config host: {:?}", &config.host);
+    println!("Config (JSON): {:#?}", &json_conf);
+    println!("Config (TOML): {:#?}", &toml_conf);
+    println!("Config (YAML): {:#?}", &yaml_conf);
 
     Ok(())
 }
