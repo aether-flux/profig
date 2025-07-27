@@ -12,6 +12,7 @@ pub struct MetaField {
     pub min: Option<f64>,
     pub max: Option<f64>,
     pub regex: Option<String>,
+    pub doc: Option<String>,
 }
 
 #[derive(Debug)]

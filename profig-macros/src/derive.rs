@@ -36,10 +36,6 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
         }
     }
 
-    for f in &formats {
-        println!("Formats: {:#?}", f);
-    }
-
     // Make sure it's a struct
     if let Data::Struct(data_struct) = input.data.clone() {
         if let Fields::Named(fields_named) = data_struct.fields {
@@ -96,14 +92,6 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
                             if let Ok(value) = meta.value() {
                                 let lit: Lit = value.parse()?;
 
-                                // let val_str = match lit {
-                                //     Lit::Str(s) => s.value(),
-                                //     Lit::Int(i) => i.base10_digits().to_string(),
-                                //     Lit::Bool(b) => b.value.to_string(),
-                                //     Lit::Float(f) => f.base10_digits().to_string(),
-                                //     _ => "UNKNOWN".into(),
-                                // };
-
                                 match (key.as_str(), lit) {
                                     ("default", Lit::Str(s)) => meta_field.default = Some(s.value()),
                                     ("min", Lit::Int(i)) => meta_field.min = Some(i.base10_parse::<f64>()?),
@@ -111,23 +99,15 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
                                     ("max", Lit::Int(i)) => meta_field.max = Some(i.base10_parse::<f64>()?),
                                     ("max", Lit::Float(f)) => meta_field.max = Some(f.base10_parse::<f64>()?),
                                     ("regex", Lit::Str(s)) => meta_field.regex = Some(s.value()),
+                                    ("doc", Lit::Str(s)) => meta_field.doc = Some(s.value()),
                                     _ => {
                                         return Err(syn::Error::new_spanned(meta.path, format!("Unknown key or wrong value type for '{}'", key)));
                                     }
                                 }
 
-                                // metadata.push((key, val_str));
                             } else {
                                 return Err(syn::Error::new_spanned(meta.path, format!("Unknown flag: '{}'", key)));
                             }
-
-                            // metadata.push(field_type);
-
-                            // schema.push(FieldSchema {
-                            //     name: field_name,
-                            //     ty: field_type,
-                            //     metadata: meta_field,
-                            // });
 
                             Ok(())
                         });
@@ -143,26 +123,11 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
                         });
                     }
                 }
-
-                // if !metadata.is_empty() {
-                    // let line = format!("Field: {field_name} -> {:#?}", metadata);
-                    // schema_lines.push((field_name, metadata));
-                    // schema.push(FieldSchema {
-                    //     name: field_name,
-                    //     ty: field_type,
-                    //     metadata: meta_field,
-                    // });
-                // }
             }
         }
     }
 
-    // Print metadata (for now)
-    // for s in &schema {
-    //     println!("{:#?}", s);
-    // }
-
-    let schema_entries = schema.iter().map(|f| {
+    let schema_entries: Vec<_> = schema.iter().map(|f| {
         let name = &f.name;
         let ty = match f.ty {
             FieldType::Str => quote!(::profig::types::FieldType::Str),
@@ -176,6 +141,7 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
             min,
             max,
             regex,
+            doc,
         } = &f.metadata;
 
         let default = match default {
@@ -184,6 +150,11 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
         };
 
         let regex = match regex {
+            Some(v) => quote!(Some(#v.to_string())),
+            None => quote!(None),
+        };
+
+        let doc = match doc {
             Some(v) => quote!(Some(#v.to_string())),
             None => quote!(None),
         };
@@ -207,10 +178,12 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
                     min: #min,
                     max: #max,
                     regex: #regex,
+                    doc: #doc,
                 }
             }
         }
-    });
+    }).collect();
+    let schema_entries_clone = schema_entries.clone();
 
     let format_branches = formats.iter().map(|fmt| {
         let ext_check = match fmt.as_str() {
@@ -261,6 +234,17 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
                 let conf = ::serde_json::from_value(json_val)?;
 
                 return Ok(conf);
+            }
+
+            pub fn generate_docs (path: &str) -> Result<(), Box<dyn std::error::Error>> {
+                let schema_vec = vec![
+                    #(#schema_entries_clone),*
+                ];
+
+                // let docContent = ::profig::generator::generate_docs(path);
+                ::profig::generator::genrate_doc(path, &schema_vec)?;
+
+                Ok(())
             }
         }
     }
