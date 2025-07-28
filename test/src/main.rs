@@ -32,7 +32,8 @@ fn main () -> Result<(), Box<dyn std::error::Error>> {
     println!("Config (TOML): {:#?}", &toml_conf);
     // println!("Config (YAML): {:#?}", &yaml_conf);
 
-    Config::generate_docs("config.md");
+    // Config::generate_docs("config.md")?;
+    Config::sample_config("sample.toml")?;
 
     Ok(())
 }

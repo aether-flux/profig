@@ -183,7 +183,8 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
             }
         }
     }).collect();
-    let schema_entries_clone = schema_entries.clone();
+    let schema_entries_doc_gen = schema_entries.clone();
+    let schema_entries_sample_gen = schema_entries.clone();
 
     let format_branches = formats.iter().map(|fmt| {
         let ext_check = match fmt.as_str() {
@@ -208,6 +209,8 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
             }
         }
     });
+
+    let struct_name = name.to_string();
 
     quote! {
         impl #name {
@@ -238,11 +241,21 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
 
             pub fn generate_docs (path: &str) -> Result<(), Box<dyn std::error::Error>> {
                 let schema_vec = vec![
-                    #(#schema_entries_clone),*
+                    #(#schema_entries_doc_gen),*
                 ];
 
                 // let docContent = ::profig::generator::generate_docs(path);
-                ::profig::generator::genrate_doc(path, &schema_vec)?;
+                ::profig::generator::generate_doc(path, &schema_vec, #struct_name)?;
+
+                Ok(())
+            }
+
+            pub fn sample_config (path: &str) -> Result<(), Box<dyn ::std::error::Error>> {
+                let schema_vec = vec![
+                    #(#schema_entries_sample_gen),*
+                ];
+
+                ::profig::generator::sample_conf(path, &schema_vec)?;
 
                 Ok(())
             }
