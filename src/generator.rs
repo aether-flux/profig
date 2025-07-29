@@ -39,12 +39,18 @@ pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn st
                 if let Some(def) = &meta.default {
                     serde_json::Value::String(def.clone())
                 } else {
-                    serde_json::Value::String("REQUIRED".to_string())
+                    if let Some(r) = &meta.regex {
+                        serde_json::Value::String(format!("REQUIRED; must match {}", r).to_string())
+                    } else {
+                        serde_json::Value::String("REQUIRED".to_string())
+                    }
                 }
             },
             FieldType::Int => {
                 if let Some(def) = &meta.default {
                     serde_json::Value::Number(def.parse().unwrap_or(serde_json::Number::from(0)))
+                } else if let Some(min) = &meta.min {
+                    serde_json::Value::Number(serde_json::Number::from(min.to_owned() as i64))
                 } else {
                     serde_json::Value::Number(serde_json::Number::from(0))
                 }
@@ -52,6 +58,8 @@ pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn st
             FieldType::Float => {
                 if let Some(def) = &meta.default {
                     serde_json::Value::Number(serde_json::Number::from_f64(def.parse::<f64>().unwrap_or(0.0)).unwrap())
+                } else if let Some(min) = &meta.min {
+                    serde_json::Value::Number(serde_json::Number::from_f64(min.to_owned()).unwrap_or(serde_json::Number::from(0)))
                 } else {
                     serde_json::Value::Number(serde_json::Number::from_f64(0.0).unwrap())
                 }
@@ -70,8 +78,33 @@ pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn st
     }
 
     let val = serde_json::Value::Object(map);
-
     println!("Sample: {:#?}", val);
 
-    Ok(())
+    // Auto-detect config file type
+    let ext = std::path::Path::new(path)
+        .extension()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+
+    #[cfg(feature = "json")]
+    if ext == "json" {
+        crate::loader::json::save_sample(path, &val)?;
+        return Ok(());
+    }
+
+    #[cfg(feature = "toml")]
+    if ext == "toml" {
+        crate::loader::toml::save_sample(path, &val)?;
+        return Ok(());
+    }
+
+    #[cfg(feature = "yaml")]
+    if ext == "yaml" || ext == "yml" {
+        crate::loader::yaml::save_sample(path, &val)?;
+        return Ok(());
+    }
+
+    Err(format!("Unsupported or missing file extension: '{}'", ext).into())
+    // Ok(())
 }

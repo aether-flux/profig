@@ -1,0 +1,8 @@
+{
+  "debug": false,
+  "email": "REQUIRED; must match ^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$",
+  "host": "localhost",
+  "pi": 3.1415,
+  "port": 5000,
+  "threads": 4
+}
