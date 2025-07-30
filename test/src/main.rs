@@ -23,17 +23,17 @@ struct Config {
     debug: Option<bool>,
 }
 
-impl Config {
-    fn validate(&self) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Custom validate");
-        Ok(())
-    }
-}
+// impl Config {
+//     fn validate(&self) -> Result<(), Box<dyn std::error::Error>> {
+//         println!("Custom validate");
+//         Ok(())
+//     }
+// }
 
 fn main () -> Result<(), Box<dyn std::error::Error>> {
     // let json_conf = Config::load("config.json")?;
     let toml_conf = Config::load("config.toml")?;
-    toml_conf.validate()?;
+    // toml_conf.validate()?;
     // let yaml_conf = Config::load("config.yaml")?;
 
     // println!("Config (JSON): {:#?}", &json_conf);

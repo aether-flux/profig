@@ -1,11 +1,10 @@
-use profig_commons::types::{FieldSchema, FieldType};
+use profig_commons::{error::ProfigError, types::{FieldSchema, FieldType}};
 
 pub fn generate_doc (path: &str, schema: &[FieldSchema], name: &str) -> Result<(), Box<dyn std::error::Error>> {
     // for s in schema {
     //     println!("{:#?}", s);
     // }
 
-    // let mut content = "# Config File\n".to_string();
     let mut content = format!("# Config - {}\n", name).to_string();
 
     for f in schema {
@@ -19,16 +18,12 @@ pub fn generate_doc (path: &str, schema: &[FieldSchema], name: &str) -> Result<(
         }
     }
 
-    std::fs::write(path, content)?;
+    std::fs::write(path, content).map_err(ProfigError::from)?;
 
     Ok(())
 }
 
 pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn std::error::Error>> {
-    for s in schema {
-        println!("{:#?}", s);
-    }
-
     let mut map = serde_json::Map::new();
 
     for f in schema {
@@ -105,6 +100,6 @@ pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn st
         return Ok(());
     }
 
-    Err(format!("Unsupported or missing file extension: '{}'", ext).into())
+    return Err(Box::new(ProfigError::InvalidFormat(format!("Unsupported or missing file extension: '{}'", ext))));
     // Ok(())
 }

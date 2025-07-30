@@ -222,19 +222,18 @@ pub fn expand_derive_profig(input: DeriveInput) -> proc_macro2::TokenStream {
                 #(#format_branches)*
 
                 if obj.is_null() {
-                    return Err(format!("Unsupported or missing file extension: '{}'", ext).into());
+                    // return Err(format!("Unsupported or missing file extension: '{}'", ext).into());
+                    return Err(Box::new(::profig::error::ProfigError::InvalidFormat(format!("Unsupported or missing file extension: '{}'", ext))));
                 }
 
-                // obj = ::profig::loader::load_as_value(path)?;
-                
                 let schema_vec = vec![
                     #(#schema_entries),*
                 ];
 
-                let mut json_val = ::serde_json::to_value(&obj)?;
+                let mut json_val = ::serde_json::to_value(&obj).map_err(|e| ::profig::error::ProfigError::Parse { format: "json", error: e.to_string() })?;
                 ::profig::validator::validate_fields(&mut json_val, &schema_vec)?;
 
-                let conf = ::serde_json::from_value(json_val)?;
+                let conf = ::serde_json::from_value(json_val).map_err(|e| ::profig::error::ProfigError::Parse { format: "json", error: e.to_string() })?;
 
                 return Ok(conf);
             }

@@ -1,21 +1,11 @@
 use std::{any::Any, fmt};
 use std::error::Error;
+use profig_commons::error::ProfigError;
 use profig_commons::types::FieldType;
 use regex::Regex;
 use serde_json::{json, Number, Value};
 
 use crate::types::FieldSchema;
-
-#[derive(Debug)]
-struct MyErr(String);
-
-impl fmt::Display for MyErr {
-    fn fmt (&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Error for MyErr {}
 
 fn less_than_min (value: &Value, min: f64) -> bool {
     match value {
@@ -66,14 +56,15 @@ pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<()
                         if let Some(min) = &meta.min {
                             // println!("Min = {}, Value = {}", min, v);
                             if less_than_min(&v, *min) {
-                                return Err(Box::new(MyErr(format!("Value '{}' less than min. Field: '{}'", v, &f.name))));
+                                // return Err(Box::new(ProfigError::Validation(format!("Value '{}' less than min. Field: '{}'", v, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Value '{}' less than min. Field: '{}'", v, &f.name))));
                             }
                         }
 
                         if let Some(max) = &meta.max {
                             // println!("Max = {}, Value = {}", max, v);
                             if greater_than_max(&v, *max) {
-                                return Err(Box::new(MyErr(format!("Value '{}' greater than max. Field: '{}'", v, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Value '{}' greater than max. Field: '{}'", v, &f.name))));
                             }
                         }
                     },
@@ -81,21 +72,21 @@ pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<()
                         if let Some(min) = &meta.min {
                             // println!("Min = {}, Value = {}", min, v);
                             if less_than_min(&v, *min) {
-                                return Err(Box::new(MyErr(format!("Value '{}' less than min. Field: '{}'", v, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Value '{}' less than min. Field: '{}'", v, &f.name))));
                             }
                         }
 
                         if let Some(max) = &meta.max {
                             // println!("Max = {}, Value = {}", max, v);
                             if greater_than_max(&v, *max) {
-                                return Err(Box::new(MyErr(format!("Value '{}' greater than max. Field: '{}'", v, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Value '{}' greater than max. Field: '{}'", v, &f.name))));
                             }
                         }
                     },
                     FieldType::Str => {
                         if let Some(rx) = &meta.regex {
                             if !valid_regex(&v, &rx)? {
-                                return Err(Box::new(MyErr(format!("Value '{}' does not match provided regex. Field: '{}'", v, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Value '{}' does not match provided regex. Field: '{}'", v, &f.name))));
                             }
                         }
                     }
@@ -117,7 +108,7 @@ pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<()
                                     map.insert(f.name.clone(), Value::Number(parsed));
                                 }
                             } else {
-                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as integer for field '{}'", def, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Failed to parse default '{}' as integer for field '{}'", def, &f.name))));
                             }
                         },
                         FieldType::Float => {
@@ -126,7 +117,7 @@ pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<()
                                     map.insert(f.name.clone(), Value::Number(parsed));
                                 }
                             } else {
-                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as float for field '{}'", def, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Failed to parse default '{}' as float for field '{}'", def, &f.name))));
                             }
                         },
                         FieldType::Bool => {
@@ -135,7 +126,7 @@ pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<()
                                     map.insert(f.name.clone(), Value::Bool(parsed));
                                 }
                             } else {
-                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as bool for field '{}'", def, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Failed to parse default '{}' as bool for field '{}'", def, &f.name))));
                             }
                         },
                         _ => {},
@@ -157,7 +148,7 @@ pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<()
                                     map.insert(f.name.clone(), Value::Number(parsed));
                                 }
                             } else {
-                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as integer for field '{}'", def, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Failed to parse default '{}' as integer for field '{}'", def, &f.name))));
                             }
                         },
                         FieldType::Float => {
@@ -166,7 +157,7 @@ pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<()
                                     map.insert(f.name.clone(), Value::Number(parsed));
                                 }
                             } else {
-                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as float for field '{}'", def, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Failed to parse default '{}' as float for field '{}'", def, &f.name))));
                             }
                         },
                         FieldType::Bool => {
@@ -175,7 +166,7 @@ pub fn validate_fields (config: &mut Value, schema: &[FieldSchema]) -> Result<()
                                     map.insert(f.name.clone(), Value::Bool(parsed));
                                 }
                             } else {
-                                return Err(Box::new(MyErr(format!("Failed to parse default '{}' as bool for field '{}'", def, &f.name))));
+                                return Err(Box::new(ProfigError::Validation(format!("Failed to parse default '{}' as bool for field '{}'", def, &f.name))));
                             }
                         },
                         _ => {},
