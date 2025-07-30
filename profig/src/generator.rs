@@ -73,7 +73,6 @@ pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn st
     }
 
     let val = serde_json::Value::Object(map);
-    println!("Sample: {:#?}", val);
 
     // Auto-detect config file type
     let ext = std::path::Path::new(path)
@@ -85,18 +84,21 @@ pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn st
     #[cfg(feature = "json")]
     if ext == "json" {
         crate::loader::json::save_sample(path, &val)?;
+        println!("Sample config created at {}.", path);
         return Ok(());
     }
 
     #[cfg(feature = "toml")]
     if ext == "toml" {
         crate::loader::toml::save_sample(path, &val)?;
+        println!("Sample config created at {}.", path);
         return Ok(());
     }
 
     #[cfg(feature = "yaml")]
     if ext == "yaml" || ext == "yml" {
         crate::loader::yaml::save_sample(path, &val)?;
+        println!("Sample config created at {}.", path);
         return Ok(());
     }
 
