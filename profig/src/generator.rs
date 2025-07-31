@@ -19,6 +19,7 @@ pub fn generate_doc (path: &str, schema: &[FieldSchema], name: &str) -> Result<(
     }
 
     std::fs::write(path, content).map_err(ProfigError::from)?;
+    println!("\nConfig documentation created at {}.", path);
 
     Ok(())
 }
@@ -84,21 +85,21 @@ pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn st
     #[cfg(feature = "json")]
     if ext == "json" {
         crate::loader::json::save_sample(path, &val)?;
-        println!("Sample config created at {}.", path);
+        println!("\nSample config created at {}.", path);
         return Ok(());
     }
 
     #[cfg(feature = "toml")]
     if ext == "toml" {
         crate::loader::toml::save_sample(path, &val)?;
-        println!("Sample config created at {}.", path);
+        println!("\nSample config created at {}.", path);
         return Ok(());
     }
 
     #[cfg(feature = "yaml")]
     if ext == "yaml" || ext == "yml" {
         crate::loader::yaml::save_sample(path, &val)?;
-        println!("Sample config created at {}.", path);
+        println!("\nSample config created at {}.", path);
         return Ok(());
     }
 
