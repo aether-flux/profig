@@ -3,6 +3,12 @@ name = "profig"
 version = "0.1.0"
 edition = "2021"
 publish = true
+description = "Declarative config loader for Rust with schema validation, samples, and documentation generation."
+license = "MIT"
+repository = "https://github.com/aether-flux/profig"
+readme = "../README.md"
+keywords = ["config", "validation", "schema", "serde", "macros"]
+categories = ["config", "development-tools::build-utils"]
 
 [features]
 default = []

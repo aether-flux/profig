@@ -1,6 +1,13 @@
-use profig_commons::{error::ProfigError, types::{FieldSchema, FieldType}};
+use profig_commons::{
+    error::ProfigError,
+    types::{FieldSchema, FieldType},
+};
 
-pub fn generate_doc (path: &str, schema: &[FieldSchema], name: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn generate_doc(
+    path: &str,
+    schema: &[FieldSchema],
+    name: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     // for s in schema {
     //     println!("{:#?}", s);
     // }
@@ -24,7 +31,7 @@ pub fn generate_doc (path: &str, schema: &[FieldSchema], name: &str) -> Result<(
     Ok(())
 }
 
-pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn std::error::Error>> {
+pub fn sample_conf(path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn std::error::Error>> {
     let mut map = serde_json::Map::new();
 
     for f in schema {
@@ -34,14 +41,12 @@ pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn st
             FieldType::Str => {
                 if let Some(def) = &meta.default {
                     serde_json::Value::String(def.clone())
-                } else {
-                    if let Some(r) = &meta.regex {
+                } else if let Some(r) = &meta.regex {
                         serde_json::Value::String(format!("REQUIRED; must match {}", r).to_string())
-                    } else {
+                } else {
                         serde_json::Value::String("REQUIRED".to_string())
-                    }
                 }
-            },
+            }
             FieldType::Int => {
                 if let Some(def) = &meta.default {
                     serde_json::Value::Number(def.parse().unwrap_or(serde_json::Number::from(0)))
@@ -50,30 +55,34 @@ pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn st
                 } else {
                     serde_json::Value::Number(serde_json::Number::from(0))
                 }
-            },
+            }
             FieldType::Float => {
                 if let Some(def) = &meta.default {
-                    serde_json::Value::Number(serde_json::Number::from_f64(def.parse::<f64>().unwrap_or(0.0)).unwrap())
+                    serde_json::Value::Number(
+                        serde_json::Number::from_f64(def.parse::<f64>().unwrap_or(0.0)).unwrap(),
+                    )
                 } else if let Some(min) = &meta.min {
-                    serde_json::Value::Number(serde_json::Number::from_f64(min.to_owned()).unwrap_or(serde_json::Number::from(0)))
+                    serde_json::Value::Number(
+                        serde_json::Number::from_f64(min.to_owned())
+                            .unwrap_or(serde_json::Number::from(0)),
+                    )
                 } else {
                     serde_json::Value::Number(serde_json::Number::from_f64(0.0).unwrap())
                 }
-            },
+            }
             FieldType::Bool => {
                 if let Some(def) = &meta.default {
                     serde_json::Value::Bool(def == "true")
                 } else {
                     serde_json::Value::Bool(false)
                 }
-            },
-            
+            }
         };
 
         map.insert(f.name.clone(), value);
     }
 
-    let val = serde_json::Value::Object(map);
+    let _val = serde_json::Value::Object(map);
 
     // Auto-detect config file type
     let ext = std::path::Path::new(path)
@@ -84,25 +93,28 @@ pub fn sample_conf (path: &str, schema: &[FieldSchema]) -> Result<(), Box<dyn st
 
     #[cfg(feature = "json")]
     if ext == "json" {
-        crate::loader::json::save_sample(path, &val)?;
+        crate::loader::json::save_sample(path, &_val)?;
         println!("\nSample config created at {}.", path);
         return Ok(());
     }
 
     #[cfg(feature = "toml")]
     if ext == "toml" {
-        crate::loader::toml::save_sample(path, &val)?;
+        crate::loader::toml::save_sample(path, &_val)?;
         println!("\nSample config created at {}.", path);
         return Ok(());
     }
 
     #[cfg(feature = "yaml")]
     if ext == "yaml" || ext == "yml" {
-        crate::loader::yaml::save_sample(path, &val)?;
+        crate::loader::yaml::save_sample(path, &_val)?;
         println!("\nSample config created at {}.", path);
         return Ok(());
     }
 
-    return Err(Box::new(ProfigError::InvalidFormat(format!("Unsupported or missing file extension: '{}'", ext))));
+    Err(Box::new(ProfigError::InvalidFormat(format!(
+        "Unsupported or missing file extension: '{}'",
+        ext
+    ))))
     // Ok(())
 }

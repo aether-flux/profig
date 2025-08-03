@@ -1,1 +1,1 @@
-pub use profig_commons::types::{FieldType, FieldSchema, MetaField};
+pub use profig_commons::types::{FieldSchema, FieldType, MetaField};
