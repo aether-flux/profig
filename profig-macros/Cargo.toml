@@ -2,7 +2,6 @@
 name = "profig-macros"
 version = "0.1.0"
 edition = "2021"
-publish = false
 
 [lib]
 proc-macro = true
@@ -11,5 +10,5 @@ proc-macro = true
 syn = { version = "2.0", features = ["full", "extra-traits"] }
 quote = "1.0"
 proc-macro2 = "1.0"
-profig-commons = { path = "../profig-commons" }
+profig-commons = { version = "0.1.0" }
 
