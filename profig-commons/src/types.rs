@@ -21,4 +21,3 @@ pub struct FieldSchema {
     pub ty: FieldType,
     pub metadata: MetaField,
 }
-

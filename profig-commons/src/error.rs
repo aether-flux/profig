@@ -1,15 +1,11 @@
+use std::error::Error;
 use std::fmt;
 use std::io;
-use std::error::Error;
-use serde_json;
 
 #[derive(Debug)]
 pub enum ProfigError {
     Io(io::Error),
-    Parse {
-        format: &'static str,
-        error: String,
-    },
+    Parse { format: &'static str, error: String },
     InvalidFormat(String),
     Validation(String),
     Custom(String),
@@ -19,7 +15,9 @@ impl fmt::Display for ProfigError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ProfigError::Io(e) => write!(f, "I/O Error: {}", e),
-            ProfigError::Parse { format, error } => write!(f, "Failed to parse {}: {}", format, error),
+            ProfigError::Parse { format, error } => {
+                write!(f, "Failed to parse {}: {}", format, error)
+            }
             ProfigError::InvalidFormat(msg) => write!(f, "Invalid Format: {}", msg),
             ProfigError::Validation(msg) => write!(f, "Validation Error: {}", msg),
             ProfigError::Custom(msg) => write!(f, "{}", msg),
