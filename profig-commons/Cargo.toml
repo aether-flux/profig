@@ -2,6 +2,12 @@
 name = "profig-commons"
 version = "0.1.0"
 edition = "2021"
+description = "Helper crate for Profig, providing types and error structs and enums."
+license = "MIT"
+repository = "https://github.com/aether-flux/profig"
+readme = "../README.md"
+keywords = ["config", "validation", "schema", "serde", "macros"]
+categories = ["config", "development-tools::build-utils"]
 
 [dependencies]
 serde_json = "1.0.141"
