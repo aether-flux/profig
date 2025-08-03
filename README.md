@@ -73,7 +73,7 @@ cargo add profig
 
 Or, for format features:
 ```bash
-cargo add profig --features toml,json
+cargo add profig --features "toml,json"
 ```
 
 Alternatively, you can directly add a `Cargo.toml` entry as follows:
