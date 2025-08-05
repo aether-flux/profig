@@ -18,7 +18,7 @@ Enable only the formats you plan to use.
 use profig::Profig;
 
 #[derive(Profig)]
-#[profig(formats = "toml,json")]
+#[profig(format = "toml,json")]
 struct MyConfig {
     #[profig(doc = "Number of threads", min = 1, default = "4")]
     threads: usize,

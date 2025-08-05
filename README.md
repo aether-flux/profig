@@ -6,7 +6,7 @@
 
 ## Features
 - **Easy config schema definition** with `#[derive(Profig)]`
-- **Set strict formats** with `#[profig(formats="json,toml")]`
+- **Set strict formats** with `#[profig(format="json,toml")]`
 - **Field-level metadata** using `#[profig(doc = "...", default = "...")]`
 - **Built-in validation** with `#[profig(min = 1, max = 10, regex = "...")]`
 - **Multi format support**: TOML, JSON, YAML
@@ -21,7 +21,7 @@ use profig::Profig;
 
 // Config Schema struct
 #[derive(Profig)]
-#[profig(formats="toml, json")]
+#[profig(format="toml, json")]
 struct AppConfig {
     #[profig(min="4", max="10", doc="Number of worker threads")]
     threads: usize,
